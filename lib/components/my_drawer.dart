@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crud_tuto/components/my_drawer_tile.dart';
+import 'package:crud_tuto/pages/ChefPage.dart';
 import 'package:crud_tuto/pages/login_or_register_page.dart';
 import 'package:crud_tuto/pages/profil_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +14,15 @@ import '../pages/settings_page.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
+
+  Future<String?> _getUserRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      return userData['role'];
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +74,8 @@ class MyDrawer extends StatelessWidget {
               }
           ),
 
+
+
           MyDrawerTile(
               text: 'P R O F I L E ',
               icon: Icons.person,
@@ -89,6 +102,30 @@ class MyDrawer extends StatelessWidget {
                 );
               }
           ),
+          FutureBuilder<String?>(
+            future: _getUserRole(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasData && snapshot.data == 'Chef') {
+                  return MyDrawerTile(
+                    text: 'G E R E R  M E N U',
+                    icon: Icons.menu,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChefPage(),
+                        ),
+                      );
+                    },
+                  );
+                }
+              }
+              return Container(); // Return an empty container if not a Chef
+            },
+          ),
+
           const Spacer(),
 
           MyDrawerTile(

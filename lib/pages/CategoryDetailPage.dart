@@ -1,53 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../components/my_drawer.dart';
 import '../services/Category.dart';
 import '../services/MenuService.dart';
-import 'CategoryDetailPage.dart';
+import '../services/Recette.dart';
+import 'RecetteDetailPage.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class CategoryDetailPage extends StatefulWidget {
+  final Category category;
+
+  CategoryDetailPage({required this.category});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  _CategoryDetailPageState createState() => _CategoryDetailPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _CategoryDetailPageState extends State<CategoryDetailPage> {
   final MenuService _menuService = MenuService();
-  String? userFirstName;
   String searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _getUserFirstName();
-  }
-
-  Future<void> _getUserFirstName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      setState(() {
-        userFirstName = userData['firstName'];
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Bienvenue ${userFirstName ?? ''}"),
+        title: Text(widget.category.name),
         backgroundColor: Theme.of(context).colorScheme.surface,
       ),
-      drawer: MyDrawer(),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Vous trouverez les recettes par catégories ...',
+              'Vous trouverez les recettes de catégorie ${widget.category.name} ...',
               style: TextStyle(
                 fontSize: 16,
                 color: Theme.of(context).colorScheme.inversePrimary,
@@ -58,7 +40,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: TextField(
               decoration: InputDecoration(
-                labelText: 'Rechercher une catégorie',
+                labelText: 'Rechercher une recette',
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) {
@@ -68,39 +50,54 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-
-          SizedBox(height: 30),
           Expanded(
-            child: StreamBuilder<List<Category>>(
-              stream: _menuService.getCategories(),
+            child: StreamBuilder<List<Recette>>(
+              stream: _menuService.getRecettesByCategory(widget.category.name),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  final categories = snapshot.data!
-                      .where((category) => category.name.toLowerCase().contains(searchQuery))
+                  final recettes = snapshot.data!
+                      .where((recette) => recette.name.toLowerCase().contains(searchQuery))
                       .toList();
+                  if (recettes.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'Aucune recette disponible pour cette catégorie.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
+                    );
+                  }
                   return ListView.builder(
-                    itemCount: categories.length,
+                    itemCount: recettes.length,
                     itemBuilder: (context, index) {
-                      final category = categories[index];
+                      final item = recettes[index];
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         color: Theme.of(context).colorScheme.secondary,
                         child: ListTile(
-                          leading: Image.asset(
-                            'lib/images/plats.jpg', // Adjust image path as needed
-                            width: 200,
-                            height: 250,
-                            //fit: BoxFit.cover,
+                          contentPadding: const EdgeInsets.all(16.0),
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.asset(
+                              item.imagePath,
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                           title: Text(
-                            category.name.toUpperCase(),
+                            item.name.toUpperCase(),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).colorScheme.inversePrimary,
                             ),
                           ),
                           subtitle: Text(
-                            'Vous trouverez tous les recettes de ${category.name.toLowerCase()} içi !',
+                            item.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.inversePrimary,
                             ),
@@ -109,7 +106,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CategoryDetailPage(category: category),
+                                builder: (context) => RecetteDetailPage(recette: item),
                               ),
                             );
                           },
