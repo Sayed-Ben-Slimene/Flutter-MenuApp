@@ -91,20 +91,6 @@ class MyDrawer extends StatelessWidget {
                 );
               }
           ),
-          //add menupage
-          MyDrawerTile(
-              text: 'M E N U',
-              icon: Icons.menu,
-              onTap: (){
-                Navigator.pop(context);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context)=>const MenuPage(),
-                    )
-                );
-              }
-          ),
           MyDrawerTile(
               text: 'S E T T I N G ',
               icon: Icons.settings,

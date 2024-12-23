@@ -241,11 +241,6 @@ class _RecetteDetailPageState extends State<RecetteDetailPage> {
                             },
                           ),
 
-                          const SizedBox(height: 16),
-                          Text(
-                            'Average Rating: ${recette.averageRating.toStringAsFixed(1)} (${recette.numberOfRatings} ratings)',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold , color: Colors.blueAccent),
-                          ),
 
                           const SizedBox(height: 20),
                           Text(
@@ -276,6 +271,13 @@ class _RecetteDetailPageState extends State<RecetteDetailPage> {
                           ),
                         ],
                       ),
+
+
+                    const SizedBox(height: 24),
+                    Text(
+                      'Average Rating: ${recette.averageRating.toStringAsFixed(1)} (${recette.numberOfRatings} ratings)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold , color: Colors.blueAccent),
+                    ),
 
                     const SizedBox(height: 16),
                     Text(
