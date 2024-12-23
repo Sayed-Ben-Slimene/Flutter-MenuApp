@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crud_tuto/components/my_drawer_tile.dart';
+import 'package:crud_tuto/pages/AdminPage.dart';
 import 'package:crud_tuto/pages/ChefPage.dart';
 import 'package:crud_tuto/pages/login_or_register_page.dart';
+import 'package:crud_tuto/pages/menu_page.dart';
 import 'package:crud_tuto/pages/profil_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +91,20 @@ class MyDrawer extends StatelessWidget {
                 );
               }
           ),
+          //add menupage
+          MyDrawerTile(
+              text: 'M E N U',
+              icon: Icons.menu,
+              onTap: (){
+                Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context)=>const MenuPage(),
+                    )
+                );
+              }
+          ),
           MyDrawerTile(
               text: 'S E T T I N G ',
               icon: Icons.settings,
@@ -106,7 +122,7 @@ class MyDrawer extends StatelessWidget {
             future: _getUserRole(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData && snapshot.data == 'Chef') {
+                if (snapshot.hasData && snapshot.data == 'Chef'|| snapshot.data == 'Admin') {
                   return MyDrawerTile(
                     text: 'G E R E R  M E N U',
                     icon: Icons.menu,
@@ -123,6 +139,30 @@ class MyDrawer extends StatelessWidget {
                 }
               }
               return Container(); // Return an empty container if not a Chef
+            },
+          ),
+
+          FutureBuilder(
+            future: _getUserRole(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasData && snapshot.data == 'Admin' ) {
+                  return MyDrawerTile(
+                    text: 'A D M I N',
+                    icon: Icons.admin_panel_settings,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminPage(),
+                        ),
+                      );
+                    },
+                  );
+                }
+              }
+              return Container(); // Return an empty container if not an Admin
             },
           ),
 

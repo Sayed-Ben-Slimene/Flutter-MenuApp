@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/Category.dart';
 import '../services/Recette.dart';
 import '../services/MenuService.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class RecetteDetailPage extends StatefulWidget {
   final Recette recette;
@@ -15,6 +18,57 @@ class RecetteDetailPage extends StatefulWidget {
 class _RecetteDetailPageState extends State<RecetteDetailPage> {
   final MenuService _menuService = MenuService();
   final List<String> _categories = ['PLATS', 'SALADES', 'JUS', 'GATEAUX'];
+  String? userRole;
+  double? userRating;
+  String? userComment;
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserRole();
+  }
+
+  Future<void> _getUserRole() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      setState(() {
+        userRole = userDoc['role'];
+      });
+    }
+  }
+
+  Future<void> _submitRating(double rating) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await _menuService.submitRating(widget.recette.id, user.uid, rating);
+        setState(() {
+          userRating = rating;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+  }
+
+  Future<void> _submitComment(String comment) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await _menuService.submitComment(widget.recette.id, user.uid, comment);
+        setState(() {
+          userComment = comment;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+  }
 
   void _showEditRecetteDialog(Recette recette) {
     String name = recette.name;
@@ -111,12 +165,13 @@ class _RecetteDetailPageState extends State<RecetteDetailPage> {
             appBar: AppBar(
               title: Text(recette.name),
               actions: [
-                IconButton(
-                  icon: Icon(Icons.edit),
-                  onPressed: () {
-                    _showEditRecetteDialog(recette);
-                  },
-                ),
+                if (userRole == 'Chef' || userRole == 'Admin')
+                  IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () {
+                      _showEditRecetteDialog(recette);
+                    },
+                  ),
               ],
             ),
             body: SingleChildScrollView(
@@ -147,10 +202,9 @@ class _RecetteDetailPageState extends State<RecetteDetailPage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       'Category : ${recette.category}',
-                      style: TextStyle(fontSize: 20, fontStyle: FontStyle.italic,fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -162,6 +216,78 @@ class _RecetteDetailPageState extends State<RecetteDetailPage> {
                       recette.description,
                       style: TextStyle(fontSize: 16),
                     ),
+                    const SizedBox(height: 16),
+                    if (userRole == 'Client')
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rate this Recette:',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          RatingBar.builder(
+                            initialRating: userRating ?? 0,
+                            minRating: 0,
+                            direction: Axis.horizontal,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                            itemBuilder: (context, _) => Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                            ),
+                            onRatingUpdate: (rating) {
+                              _submitRating(rating);
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+                          Text(
+                            'Average Rating: ${recette.averageRating.toStringAsFixed(1)} (${recette.numberOfRatings} ratings)',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold , color: Colors.blueAccent),
+                          ),
+
+                          const SizedBox(height: 20),
+                          Text(
+                            'Add a Comment:',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          TextField(
+                            decoration: InputDecoration(
+                              labelText: 'Comment',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (value) {
+                              userComment = value;
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(Colors.black),
+                            ),
+                            onPressed: () {
+                              if (userComment != null && userComment!.isNotEmpty) {
+                                _submitComment(userComment!);
+                              }
+                            },
+                            child: Text('Submit'),
+                          ),
+                        ],
+                      ),
+
+                    const SizedBox(height: 16),
+                    Text(
+                      'Comments:',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold ,color: Colors.indigo),
+                    ),
+                    ...recette.comments.map((comment) => Card(
+                      margin: EdgeInsets.symmetric(vertical: 8.0),
+                      child: ListTile(
+                        title: Text(comment),
+                      ),
+                    )),
                   ],
                 ),
               ),

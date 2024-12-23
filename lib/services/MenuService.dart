@@ -63,4 +63,83 @@ class MenuService {
     });
   }
 
+  /*Future<void> submitRating(String recetteId, String userId, double rating) async {
+    DocumentReference recetteRef = menuCollection.doc(recetteId);
+    DocumentSnapshot recetteSnapshot = await recetteRef.get();
+
+    if (recetteSnapshot.exists) {
+      Recette recette = Recette.fromFirestore(recetteSnapshot);
+      double totalRating = recette.averageRating * recette.numberOfRatings;
+      totalRating += rating;
+      recette.numberOfRatings += 1;
+      recette.averageRating = totalRating / recette.numberOfRatings;
+
+      await recetteRef.update({
+        'averageRating': recette.averageRating,
+        'numberOfRatings': recette.numberOfRatings,
+      });
+    }
+  }*/
+
+  Future<void> submitRating(String recetteId, String userId, double rating) async {
+    DocumentReference recetteRef = menuCollection.doc(recetteId);
+    DocumentSnapshot recetteSnapshot = await recetteRef.get();
+
+    if (recetteSnapshot.exists) {
+      Recette recette = Recette.fromFirestore(recetteSnapshot);
+
+      // Check if the user has already rated this recipe
+      DocumentReference userRatingRef = recetteRef.collection('ratings').doc(userId);
+      DocumentSnapshot userRatingSnapshot = await userRatingRef.get();
+
+      if (userRatingSnapshot.exists) {
+        // User has already rated this recipe
+        throw Exception('You have already rated this recipe.');
+      } else {
+        // User has not rated this recipe yet
+        double totalRating = recette.averageRating * recette.numberOfRatings;
+        totalRating += rating;
+        recette.numberOfRatings += 1;
+        recette.averageRating = totalRating / recette.numberOfRatings;
+
+        await recetteRef.update({
+          'averageRating': recette.averageRating,
+          'numberOfRatings': recette.numberOfRatings,
+        });
+
+        // Save the user's rating
+        await userRatingRef.set({'rating': rating});
+      }
+    }
+  }
+
+
+  Future<void> submitComment(String recetteId, String userId, String comment) async {
+    DocumentReference recetteRef = menuCollection.doc(recetteId);
+    DocumentSnapshot recetteSnapshot = await recetteRef.get();
+
+    if (recetteSnapshot.exists) {
+      Recette recette = Recette.fromFirestore(recetteSnapshot);
+
+      // Check if the user has already commented on this recipe
+      DocumentReference userCommentRef = recetteRef.collection('comments').doc(userId);
+      DocumentSnapshot userCommentSnapshot = await userCommentRef.get();
+
+      if (userCommentSnapshot.exists) {
+        // User has already commented on this recipe
+        throw Exception('You have already commented on this recipe.');
+      } else {
+        // User has not commented on this recipe yet
+        recette.comments.add(comment);
+
+        await recetteRef.update({
+          'comments': recette.comments,
+        });
+
+        // Save the user's comment
+        await userCommentRef.set({'comment': comment});
+      }
+    }
+  }
+
 }

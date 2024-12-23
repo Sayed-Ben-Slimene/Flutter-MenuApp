@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crud_tuto/pages/AdminPage.dart';
 import 'package:crud_tuto/pages/ChefPage.dart';
 import 'package:crud_tuto/pages/home_page.dart';
 import 'package:crud_tuto/pages/profil_page.dart';
@@ -86,6 +87,12 @@ class AuthService {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => ChefPage()),
+      );
+
+    } else if (role == "Admin") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => AdminPage()),
       );
     } else {
       Navigator.pushReplacement(

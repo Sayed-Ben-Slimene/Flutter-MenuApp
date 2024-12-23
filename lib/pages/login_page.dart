@@ -1,6 +1,7 @@
 import 'package:crud_tuto/components/my_button.dart';
 import 'package:crud_tuto/components/my_textfield.dart';
 import 'package:crud_tuto/components/square_tile.dart';
+import 'package:crud_tuto/pages/AdminPage.dart';
 import 'package:crud_tuto/pages/ChefPage.dart';
 import 'package:crud_tuto/pages/home_page.dart';
 import 'package:crud_tuto/services/auth_service.dart';
@@ -84,6 +85,13 @@ class _LoginPageState extends State<LoginPage> {
           context,
           MaterialPageRoute(
             builder: (_) => const HomePage(),
+          ),
+        );
+      } else if (result == 'Admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AdminPage(),
           ),
         );
       } else {
